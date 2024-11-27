@@ -13,4 +13,4 @@ EXPOSE 3000
 
 ENV NAME World
 
-CMD ["python", "run.py"]
+CMD ["python", "main.py"]
