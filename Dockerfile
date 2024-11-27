@@ -6,7 +6,7 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
-EXPOSE 3000
+EXPOSE 5000
 
 ENV NAME World
 
