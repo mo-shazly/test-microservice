@@ -5,6 +5,8 @@ WORKDIR /app
 COPY . .
 
 RUN pip install -r requirements.txt
+RUN apt update && apt install -y curl
+
 
 EXPOSE 5000
 
