@@ -24,7 +24,7 @@ jobs:
             - name: Docker image Test
               run: |
                    docker images
-                   docker run -d -p 3000:3000 ${{ vars.DOCKERHUB_USERNAME }}/microservice-test-app
+                   docker run -d -p 3000:3000 ${{ vars.DOCKERHUB_USERNAME }}/microservice-test-app 
                    export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' microservice-test-app)
                    echo $IP
                    ls -l
