@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY . /app
 
+COPY . .
+
 # Flask
 RUN pip install --no-cache-dir -r requirements.txt 
 
@@ -11,4 +13,4 @@ EXPOSE 3000
 
 ENV NAME World
 
-CMD ["python", "app.py"]
+CMD ["python", "run.py"]
