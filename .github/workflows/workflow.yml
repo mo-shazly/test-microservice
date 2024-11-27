@@ -35,12 +35,7 @@ jobs:
                    export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' micro-app)
                    echo $IP
 
-            - name: Build and push
-              uses: docker/build-push-action@v5
-              with:
-                  context: .
-                  push: flase
-                  tags: ${{ vars.DOCKERHUB_USERNAME }}/micro-app:${{ github.sha }}
+           
 
     terraform:
         name: terraform deployment
