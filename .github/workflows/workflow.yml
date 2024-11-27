@@ -14,7 +14,9 @@ jobs:
                 password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
             - name: install Dependancies
-              run: ./install_dep.sh
+              run: |
+                    chmod +x install_dep.sh
+                    ./install_dep.sh
 
             - name: Build and push
               uses: docker/build-push-action@v5
@@ -42,6 +44,7 @@ jobs:
 
     terraform:
         name: terraform deployment
+        needs: containerization
         runs-on: ubuntu-latest
         steps:
             - name: checkout config files
@@ -55,7 +58,7 @@ jobs:
               with:
                 aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                 aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                aws-region: us-east-1
+                aws-region: us-west-2
           
 
             - name: Terraform init
