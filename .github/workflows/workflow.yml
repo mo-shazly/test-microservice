@@ -29,4 +29,5 @@ jobs:
                          ${{ vars.DOCKERHUB_USERNAME }}/microservice-test-app
                    export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' microservice-test-app)
                    echo $IP
+                   ls -l
       
