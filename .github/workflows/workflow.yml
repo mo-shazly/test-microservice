@@ -38,7 +38,7 @@ jobs:
               uses: docker/build-push-action@v5
               with:
                 context: .
-                push: flase
+                push: true
                 tags: ${{ vars.DOCKERHUB_USERNAME }}/micro-app:${{ github.sha }}
              
 
