@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY . /app
 
-COPY . .
+#COPY . .
 
 # Flask
 #RUN pip install --no-cache-dir -r requirements.txt 
-RUN pip install Flask==2.2.2
+RUN pip install Flask==2.2.2 Werkzeug
 
 EXPOSE 3000
 
