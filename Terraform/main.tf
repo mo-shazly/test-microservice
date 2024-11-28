@@ -2,10 +2,8 @@ provider "aws" {
   region = var.aws_region
 }
 
-
 resource "aws_vpc" "micro_vpc" {
   cidr_block = var.vpc_cidr
-
   enable_dns_support   = true  
   enable_dns_hostnames = true 
 
@@ -14,7 +12,6 @@ resource "aws_vpc" "micro_vpc" {
   }
 }
 
-
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.micro_vpc.id
 
@@ -22,7 +19,6 @@ resource "aws_internet_gateway" "gw" {
     Name = "micro_internet_gateway"
   }
 }
-
 
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.micro_vpc.id
@@ -37,7 +33,6 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
-
 resource "aws_subnet" "public_subnet_a" {
   vpc_id            = aws_vpc.micro_vpc.id
   cidr_block        = var.public_subnet_a_cidr
@@ -47,7 +42,6 @@ resource "aws_subnet" "public_subnet_a" {
     Name = "public_subnet_a"
   }
 }
-
 
 resource "aws_subnet" "public_subnet_b" {
   vpc_id            = aws_vpc.micro_vpc.id
@@ -59,18 +53,15 @@ resource "aws_subnet" "public_subnet_b" {
   }
 }
 
-
 resource "aws_route_table_association" "subnet_a_association" {
   subnet_id      = aws_subnet.public_subnet_a.id
   route_table_id = aws_route_table.public_rt.id
 }
 
-
 resource "aws_route_table_association" "subnet_b_association" {
   subnet_id      = aws_subnet.public_subnet_b.id
   route_table_id = aws_route_table.public_rt.id
 }
-
 
 resource "aws_security_group" "allow_ssh_http" {
   vpc_id      = aws_vpc.micro_vpc.id
@@ -129,10 +120,10 @@ module "eks" {
   cluster_name    = "microservice-eks"
   cluster_version = "1.27"
 
-  vpc_id      = aws_vpc.micro_vpc.id
-  subnet_ids  = [aws_subnet.public_subnet_a.id, aws_subnet.public_subnet_b.id]
+  vpc_id     = aws_vpc.micro_vpc.id
+  subnet_ids = [aws_subnet.public_subnet_a.id, aws_subnet.public_subnet_b.id]
 
-  node_groups = {
+  managed_node_groups = {
     eks_nodes = {
       desired_capacity = 2
       max_capacity     = 3
@@ -142,6 +133,3 @@ module "eks" {
     }
   }
 }
-
-
-
