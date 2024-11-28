@@ -118,7 +118,7 @@ resource "aws_security_group" "allow_ssh_http" {
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
   cluster_name    = "microservice-eks"
-  cluster_version = "1.27"
+  cluster_version = "1.17"
 
   vpc_id     = aws_vpc.micro_vpc.id
   subnet_ids = [aws_subnet.public_subnet_a.id, aws_subnet.public_subnet_b.id]
