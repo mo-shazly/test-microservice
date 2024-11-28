@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: microservice
-        image: your-dockerhub-username/microservice:latest
+        image: 20150748/micro-app:db451f1e251d730ff3f8eff4a06365bafe00ad8f
         ports:
         - containerPort: 5000

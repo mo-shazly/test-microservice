@@ -129,8 +129,8 @@ module "eks" {
   cluster_name    = "microservice-eks"
   cluster_version = "1.27"
 
-  vpc_id      = "aws_vpc.micro_vpc.id"
-  subnet_ids  = ["aws_subnet.public_subnet_a.id", "aws_subnet.public_subnet_b.id"]
+  vpc_id      = aws_vpc.micro_vpc.id
+  subnet_ids  = [aws_subnet.public_subnet_a.id, aws_subnet.public_subnet_b.id]
 
   node_groups = {
     eks_nodes = {
@@ -142,5 +142,6 @@ module "eks" {
     }
   }
 }
+
 
 

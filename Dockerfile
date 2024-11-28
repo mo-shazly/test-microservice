@@ -1,15 +1,14 @@
-FROM python:3.8-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY . .
-
-RUN pip install -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 RUN apt update && apt install -y curl
 
+COPY . .
 
 EXPOSE 5000
 
-ENV NAME World
-
 CMD ["python", "run.py"]
+
