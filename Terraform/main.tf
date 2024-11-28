@@ -123,7 +123,7 @@ module "eks" {
   vpc_id     = aws_vpc.micro_vpc.id
   subnet_ids = [aws_subnet.public_subnet_a.id, aws_subnet.public_subnet_b.id]
 
-  managed_node_groups = {
+  node_groups = {
     eks_nodes = {
       desired_capacity = 2
       max_capacity     = 3
