@@ -54,7 +54,6 @@ jobs:
           - name: checkout config files
             uses: actions/checkout@v2
 
-            
           #- name: setup terraform 
            # uses: hashicorp/setup-terraform@v3.1.2
 
