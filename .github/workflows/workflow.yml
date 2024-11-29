@@ -74,7 +74,7 @@ jobs:
             run: terraform validate 
             
           - name: terraform Plan
-            run: terraform plan -var-file="terraform.tfvars"
+            run: terraform plan 
             working-directory: ./Terraform
 
           - name: terraform apply
