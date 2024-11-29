@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 provider "aws" {
   region = var.region
 }
@@ -5,7 +14,7 @@ provider "aws" {
 # VPC
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "3.18.1"
+  version = "3.19.0" # Use the latest compatible version
 
   name = "${var.cluster_name}-vpc"
 
@@ -23,6 +32,9 @@ module "vpc" {
     Environment = var.environment
   }
 }
+
+data "aws_availability_zones" "available" {}
+
 
 # IAM Role for EKS Cluster
 resource "aws_iam_role" "eks_cluster_role" {
