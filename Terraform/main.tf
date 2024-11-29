@@ -1,10 +1,20 @@
+terraform {
+  backend "s3" {
+    bucket         = "my-s3-bucket"      
+    key            = "stage-eks/terraform.tfstate"   
+    region         = "us-west-2"                        
+    encrypt        = true                              
+    dynamodb_table = "your-lock-table"          
+  }
+}
+
 provider "aws" {
   region = var.region
 }
 
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
-  name   = "micro-eks-vpc"
+  name   = "stage-eks-vpc"
   cidr   = var.vpc_cidr
 
   enable_dns_support   = true
@@ -16,11 +26,11 @@ module "vpc" {
   azs             = ["us-west-2a", "us-west-2b"]
 }
 
-resource "aws_internet_gateway" "eks-gw" {
+resource "aws_internet_gateway" "stage-gw" {
   vpc_id = module.vpc.vpc_id
 
-  tags = {
-    Name = "micro-eks-gateway"
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -29,7 +39,7 @@ resource "aws_route_table" "public_rt" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.eks-gw.id
+    gateway_id = aws_internet_gateway.stage-gw.id
   }
 
   tags = {
@@ -48,7 +58,7 @@ resource "aws_route_table_association" "subnet_association_b" {
 }
 
 resource "aws_security_group" "eks_sg" {
-  name        = "micro-eks-sg"
+  name        = "stage-eks-sg"
   description = "Security group for EKS cluster"
   vpc_id      = module.vpc.vpc_id
 
@@ -68,7 +78,7 @@ resource "aws_security_group" "eks_sg" {
 }
 
 resource "aws_iam_role" "eks_worker_node_role" {
-  name = "eks-worker-node-role"
+  name = "stage-eks-worker-node-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -84,9 +94,8 @@ resource "aws_iam_role" "eks_worker_node_role" {
   })
 }
 
-
 resource "aws_iam_role" "eks_cluster_role" {
-  name = "eks-cluster-role"
+  name = "stage-eks-cluster-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -102,23 +111,7 @@ resource "aws_iam_role" "eks_cluster_role" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKSWorkerNodePolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.eks_cluster_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEC2ContainerRegistryReadOnly" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.eks_cluster_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKS_CNI_Policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.eks_worker_node_role.name
-}
-
-
-resource "aws_eks_cluster" "micro_eks" {
+resource "aws_eks_cluster" "stage_eks" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster_role.arn
 
@@ -127,10 +120,10 @@ resource "aws_eks_cluster" "micro_eks" {
   }
 }
 
-resource "aws_eks_node_group" "micro_eks_node_group" {
-  cluster_name    = aws_eks_cluster.micro_eks.name
-  node_group_name = "micro-eks-node-group"
-  node_role_arn   = aws_iam_role.eks_cluster_role.arn
+resource "aws_eks_node_group" "stage_eks_node_group" {
+  cluster_name    = aws_eks_cluster.stage_eks.name
+  node_group_name = "stage-eks-node-group"
+  node_role_arn   = aws_iam_role.eks_worker_node_role.arn
   subnet_ids      = module.vpc.private_subnets
 
   scaling_config {

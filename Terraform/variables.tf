@@ -25,7 +25,7 @@ variable "public_subnet_cidr" {
 variable "cluster_name" {
   description = "The name of the EKS cluster"
   type        = string
-  default     = "micro-eks-cluster"
+  default     = "stage-eks-cluster"
 }
 
 variable "desired_capacity" {
@@ -59,5 +59,5 @@ variable "node_group_name" {
 variable "node_instance_type" {
   description = "The EC2 instance type for the worker nodes"
   type        = string
-  default     = "t3.medium"  # Modify as needed
+  default     = "t3.medium"
 }

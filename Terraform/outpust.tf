@@ -1,13 +1,13 @@
 output "eks_cluster_name" {
-  value = aws_eks_cluster.micro_eks.name
+  value = aws_eks_cluster.stage_eks.name
 }
 
 output "eks_cluster_endpoint" {
-  value = aws_eks_cluster.micro_eks.endpoint
+  value = aws_eks_cluster.stage_eks.endpoint
 }
 
 output "eks_cluster_certificate_authority_data" {
-  value = aws_eks_cluster.micro_eks.certificate_authority[0].data
+  value = aws_eks_cluster.stage_eks.certificate_authority[0].data
 }
 
 output "vpc_id" {
@@ -23,5 +23,5 @@ output "public_subnet_ids" {
 }
 
 output "eks_nodegroup_arn" {
-  value = aws_eks_node_group.micro_eks_node_group.arn
+  value = aws_eks_node_group.stage_eks_node_group.arn
 }
