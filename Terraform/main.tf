@@ -84,6 +84,22 @@ resource "aws_iam_role" "eks_cluster_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKSWorkerNodePolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  role       = aws_iam_role.eks_cluster_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEC2ContainerRegistryReadOnly" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.eks_cluster_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKS_CNI_Policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.eks_worker_node_role.name
+}
+
+
 resource "aws_eks_cluster" "micro_eks" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster_role.arn
