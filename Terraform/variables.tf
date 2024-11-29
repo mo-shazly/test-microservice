@@ -1,49 +1,47 @@
 variable "region" {
-  description = "AWS region to deploy resources in"
+  description = "The AWS region to deploy resources in"
   type        = string
+  default     = "us-west-2"
 }
 
 variable "vpc_cidr" {
   description = "CIDR block for the VPC"
   type        = string
+  default     = "10.0.0.0/16"
 }
 
-variable "private_subnets" {
-  description = "Private subnet CIDR blocks"
-  type        = list(string)
+variable "private_subnet_cidr" {
+  description = "CIDR block for the private subnet"
+  type        = string
+  default     = "10.0.1.0/24"
 }
 
-variable "public_subnets" {
-  description = "Public subnet CIDR blocks"
-  type        = list(string)
+variable "public_subnet_cidr" {
+  description = "CIDR block for the public subnet"
+  type        = string
+  default     = "10.0.0.0/24"
 }
 
 variable "cluster_name" {
   description = "The name of the EKS cluster"
   type        = string
+  default     = "micro-eks-cluster"
 }
 
-variable "node_instance_type" {
-  description = "The instance type for the EKS nodes"
-  type        = string
-}
-
-variable "node_desired_capacity" {
-  description = "The desired number of worker nodes"
+variable "desired_capacity" {
+  description = "The desired number of nodes in the node group"
   type        = number
+  default     = 2
 }
 
-variable "node_max_capacity" {
-  description = "The maximum number of worker nodes"
+variable "max_capacity" {
+  description = "The maximum number of nodes in the node group"
   type        = number
+  default     = 3
 }
 
-variable "node_min_capacity" {
-  description = "The minimum number of worker nodes"
+variable "min_capacity" {
+  description = "The minimum number of nodes in the node group"
   type        = number
-}
-
-variable "environment" {
-  description = "Environment tag"
-  type        = string
+  default     = 1
 }
