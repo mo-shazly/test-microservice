@@ -55,10 +55,12 @@ jobs:
           terraform_version: 1.4.4
       - name: terraform init
         run: terraform init
+        working-directory: ./Terraform
       
       - name: terraform plan
         run: terraform plan
-        
+        working-directory: ./Terraform
+
       - name: terraform apply or destroy
         run: |
           if [ "${{ github.event.inputs.destroy }}" = "yes" ]; then
@@ -66,3 +68,4 @@ jobs:
           else
             terraform apply -auto-approve
           fi
+        working-directory: ./Terraform
