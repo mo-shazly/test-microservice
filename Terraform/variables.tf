@@ -55,3 +55,9 @@ variable "node_group_name" {
   description = "The name of the EKS node group"
   type        = string
 }
+
+variable "node_instance_type" {
+  description = "The EC2 instance type for the worker nodes"
+  type        = string
+  default     = "t3.medium"  # Modify as needed
+}
