@@ -11,10 +11,9 @@ provider "aws" {
   region = var.region
 }
 
-# VPC
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "3.19.0" # Use the latest compatible version
+  version = "3.19.0"  # Ensure you use the latest version
 
   name = "${var.cluster_name}-vpc"
 
