@@ -1,6 +1,12 @@
 name: Microservice pipeline App
 on:
-    push
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
     terraform:
       name: terraform deployment
@@ -47,9 +53,23 @@ jobs:
            # run: terraform apply -auto-approve
             #working-directory: ./Terraform
 
-         # - name: terraform destroy
-          #  run: terraform destroy
-           # working-directory: ./Terraform
+          #- name: terraform destroy
+           #run: terraform destroy
+            #working-directory: ./Terraform
+
+          - name: Set up kubectl
+            uses: azure/setup-kubectl@v1
+            with:
+              version: 'latest'
+   
+          - name: Update kubeconfig for EKS cluster
+            run: |
+                 aws eks --region us-west-2 update-kubeconfig --name eks-cluster
+           
+          - name: Deploy to Kubernetes using kubectl
+            run: |
+                 kubectl apply -f k8s/deployment.yaml
+                 kubectl apply -f k8s/service.yaml
     
     
   

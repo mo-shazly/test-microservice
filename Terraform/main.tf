@@ -2,103 +2,73 @@ provider "aws" {
   region = var.aws_region
 }
 
-resource "aws_vpc" "micro_vpc" {
+# Create a VPC
+resource "aws_vpc" "eks_vpc" {
   cidr_block = var.vpc_cidr
-  enable_dns_support   = true  
-  enable_dns_hostnames = true 
-
+  enable_dns_support = true
+  enable_dns_hostnames = true
   tags = {
-    Name = "micro_vpc"
+    Name = "eks-vpc"
   }
 }
 
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.micro_vpc.id
-
+# Create Public Subnets
+resource "aws_subnet" "eks_public_subnet_1" {
+  vpc_id     = aws_vpc.eks_vpc.id
+  cidr_block = var.public_subnet_1_cidr
+  availability_zone = var.public_az_1
+  map_public_ip_on_launch = true
   tags = {
-    Name = "micro_internet_gateway"
+    Name = "eks-public-subnet-1"
   }
 }
 
-resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.micro_vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-
+resource "aws_subnet" "eks_public_subnet_2" {
+  vpc_id     = aws_vpc.eks_vpc.id
+  cidr_block = var.public_subnet_2_cidr
+  availability_zone = var.public_az_2
+  map_public_ip_on_launch = true
   tags = {
-    Name = "public_rt"
+    Name = "eks-public-subnet-2"
   }
 }
 
-resource "aws_subnet" "public_subnet_a" {
-  vpc_id            = aws_vpc.micro_vpc.id
-  cidr_block        = var.public_subnet_a_cidr
-  availability_zone = "us-west-2a"
-
+# Create Private Subnets (For worker nodes)
+resource "aws_subnet" "eks_private_subnet_1" {
+  vpc_id     = aws_vpc.eks_vpc.id
+  cidr_block = var.private_subnet_1_cidr
+  availability_zone = var.private_az_1
   tags = {
-    Name = "public_subnet_a"
+    Name = "eks-private-subnet-1"
   }
 }
 
-resource "aws_subnet" "public_subnet_b" {
-  vpc_id            = aws_vpc.micro_vpc.id
-  cidr_block        = var.public_subnet_b_cidr
-  availability_zone = "us-west-2b"
-
+resource "aws_subnet" "eks_private_subnet_2" {
+  vpc_id     = aws_vpc.eks_vpc.id
+  cidr_block = var.private_subnet_2_cidr
+  availability_zone = var.private_az_2
   tags = {
-    Name = "public_subnet_b"
+    Name = "eks-private-subnet-2"
   }
 }
 
-resource "aws_route_table_association" "subnet_a_association" {
-  subnet_id      = aws_subnet.public_subnet_a.id
-  route_table_id = aws_route_table.public_rt.id
+# Create an Internet Gateway for Public Subnets
+resource "aws_internet_gateway" "eks_igw" {
+  vpc_id = aws_vpc.eks_vpc.id
+  tags = {
+    Name = "eks-igw"
+  }
 }
 
-resource "aws_route_table_association" "subnet_b_association" {
-  subnet_id      = aws_subnet.public_subnet_b.id
-  route_table_id = aws_route_table.public_rt.id
-}
-
-resource "aws_security_group" "allow_ssh_http" {
-  vpc_id      = aws_vpc.micro_vpc.id
-  name        = "allow_ssh_http"
-  description = "Allow SSH, HTTP, and Postgres access"
+# Create Security Group for EKS Cluster
+resource "aws_security_group" "eks_security_group" {
+  name        = "eks-security-group"
+  vpc_id      = aws_vpc.eks_vpc.id
+  description = "Allow all inbound traffic for the EKS cluster"
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  ingress {
-    from_port   = 9090
-    to_port     = 9090
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -109,28 +79,76 @@ resource "aws_security_group" "allow_ssh_http" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = "allow_ssh_http"
-  }
 }
 
-module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "17.24.0"  # Specify a specific version
-  cluster_name    = "microservice-eks"
-  cluster_version = "1.17"
+# IAM Role for EKS Cluster
+resource "aws_iam_role" "eks_cluster_role" {
+  name = "eks-cluster-role"
 
-  vpc_id     = aws_vpc.micro_vpc.id
- # subnet_ids = [aws_subnet.public_subnet_a.id, aws_subnet.public_subnet_b.id]
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "eks.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
 
-  node_groups = {
-    eks_nodes = {
-      desired_capacity = 2
-      max_capacity     = 3
-      min_capacity     = 1
-      instance_type    = "t3.medium"
-      subnets = [aws_subnet.public_subnet_a.id, aws_subnet.public_subnet_b.id]
-    }
+# IAM Role for Node Group
+resource "aws_iam_role" "eks_node_role" {
+  name = "eks-node-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+# Create EKS Cluster
+resource "aws_eks_cluster" "eks_cluster" {
+  name     = var.cluster_name
+  role_arn = aws_iam_role.eks_cluster_role.arn
+  vpc_config {
+    subnet_ids = [
+      aws_subnet.eks_public_subnet_1.id,
+      aws_subnet.eks_public_subnet_2.id,
+      aws_subnet.eks_private_subnet_1.id,
+      aws_subnet.eks_private_subnet_2.id
+    ]
+    security_group_ids = [aws_security_group.eks_security_group.id]
   }
+
+  depends_on = [aws_internet_gateway.eks_igw]
+}
+
+# Create EKS Node Group
+resource "aws_eks_node_group" "eks_node_group" {
+  cluster_name    = aws_eks_cluster.eks_cluster.name
+  node_role_arn   = aws_iam_role.eks_node_role.arn
+  subnet_ids      = [aws_subnet.eks_private_subnet_1.id, aws_subnet.eks_private_subnet_2.id]
+  instance_types  = var.instance_types
+  desired_capacity = var.node_desired_capacity
+  max_capacity     = var.node_max_capacity
+  min_capacity     = var.node_min_capacity
+
+  scaling_config {
+    desired_size = var.node_desired_capacity
+    max_size     = var.node_max_capacity
+    min_size     = var.node_min_capacity
+  }
+
+  depends_on = [aws_eks_cluster.eks_cluster]
 }

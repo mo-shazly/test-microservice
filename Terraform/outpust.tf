@@ -1,10 +1,11 @@
-output "vpc_id" {
-  description = "The ID of the VPC"
-  value       = aws_vpc.micro_vpc.id
+output "eks_cluster_endpoint" {
+  value = aws_eks_cluster.eks_cluster.endpoint
 }
 
-
-output "kubeconfig" {
-  value = module.eks.kubeconfig
+output "eks_cluster_kubeconfig" {
+  value = aws_eks_cluster.eks_cluster.kubeconfig
 }
 
+output "eks_cluster_arn" {
+  value = aws_eks_cluster.eks_cluster.arn
+}
