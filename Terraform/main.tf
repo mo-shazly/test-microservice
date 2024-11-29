@@ -33,7 +33,6 @@ module "vpc" {
   }
 }
 
-data "aws_availability_zones" "available" {}
 
 
 # IAM Role for EKS Cluster
