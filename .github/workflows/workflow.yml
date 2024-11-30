@@ -14,9 +14,10 @@ on:
         default: "no"
 
 jobs:
- terraform:
+  terraform:
     name: terraform deployment
     runs-on: ubuntu-latest
+    
     environment: production
     steps:
       - name: checkout config files
