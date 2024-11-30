@@ -24,6 +24,11 @@ module "vpc" {
   private_subnets = var.private_subnets
   public_subnets  = var.public_subnets
   azs             = ["us-west-2a", "us-west-2b"]
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = "1"
+    "map_public_ip_on_launch" = "true"
+  }
 }
 
 resource "aws_security_group" "eks_sg" {
@@ -37,14 +42,14 @@ resource "aws_security_group" "eks_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-   
+
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]  # Restrict this to your IP for security
   }
-  
+
   ingress {
     from_port   = 443
     to_port     = 443
@@ -62,7 +67,7 @@ resource "aws_security_group" "eks_sg" {
 
 resource "aws_key_pair" "ssh_key" {
   key_name   = "eks_ssh_key"
-  public_key = file(var.public_key_path) 
+  public_key = file(var.public_key_path) # Specify the relative path to the key in your repo
 }
 
 resource "aws_iam_role" "eks_worker_node_role" {
@@ -119,7 +124,7 @@ resource "aws_eks_cluster" "stage_eks" {
   role_arn = aws_iam_role.eks_cluster_role.arn
 
   vpc_config {
-    subnet_ids = module.vpc.public_subnets # Use public subnets for nodes
+    subnet_ids = module.vpc.public_subnets
   }
 }
 
@@ -145,7 +150,8 @@ resource "aws_eks_node_group" "stage_eks_node_group" {
     min_size     = var.node_min_capacity
   }
 
-  instance_types = ["t3.medium"] # Adjust as needed
+  instance_types = ["t3.medium"] # Adjust instance type as needed
+
   remote_access {
     ec2_ssh_key = aws_key_pair.ssh_key.key_name
   }
