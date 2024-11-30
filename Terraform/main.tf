@@ -27,7 +27,7 @@ module "vpc" {
 
   public_subnet_tags = {
     "kubernetes.io/role/elb"           = "1"
-    "map_public_ip_on_launch"          = "true"  # Ensures instances in public subnets get public IPs
+    "map_public_ip_on_launch"          = "true"  
     "kubernetes.io/role/internal-elb"  = "0"
   }
 }
@@ -68,7 +68,7 @@ resource "aws_security_group" "eks_sg" {
 
 resource "aws_key_pair" "ssh_key" {
   key_name   = "eks_ssh_key"
-  public_key = file(var.public_key_path) # Specify the relative path to the key in your repo
+  public_key = file(var.public_key_path) 
 }
 
 resource "aws_iam_role" "eks_worker_node_role" {
@@ -98,9 +98,15 @@ resource "aws_iam_role_policy_attachment" "worker_cni_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
+
 resource "aws_iam_role_policy_attachment" "ec2_read_only_policy" {
   role       = aws_iam_role.eks_worker_node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_full_access_policy" {
+  role       = aws_iam_role.eks_worker_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"  
 }
 
 resource "aws_iam_role" "eks_cluster_role" {
