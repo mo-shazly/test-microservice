@@ -42,8 +42,3 @@ variable "node_min_capacity" {
   description = "The minimum number of worker nodes"
   type        = number
 }
-
-variable "environment" {
-  description = "Environment tag"
-  type        = string
-}

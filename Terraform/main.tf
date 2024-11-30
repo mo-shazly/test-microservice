@@ -3,11 +3,10 @@ terraform {
     bucket         = "stagebucket12"
     key            = "stage-eks/terraform.tfstate"
     region         = "us-west-2"
-    dynamodb_table = "terraform-lock"   # Reference the DynamoDB table you just created
+    dynamodb_table = "terraform-lock"
     encrypt        = true
   }
 }
-
 
 provider "aws" {
   region = var.region
@@ -22,10 +21,11 @@ module "vpc" {
   enable_dns_hostnames = true
   single_nat_gateway   = false
 
-  private_subnets = [var.private_subnet_cidr, "10.0.2.0/24"]
-  public_subnets  = [var.public_subnet_cidr, "10.0.3.0/24"]
+  private_subnets = var.private_subnets
+  public_subnets  = var.public_subnets
   azs             = ["us-west-2a", "us-west-2b"]
 }
+
 # Data block to check if an existing internet gateway is attached to the VPC
 data "aws_internet_gateway" "existing_gw" {
   vpc_id = module.vpc.vpc_id
@@ -33,7 +33,7 @@ data "aws_internet_gateway" "existing_gw" {
 
 # Conditional creation of the internet gateway if one doesn't already exist
 resource "aws_internet_gateway" "stage-gw" {
-  count = length(data.aws_internet_gateway.existing_gw.ids) == 0 ? 1 : 0
+  count = length(data.aws_internet_gateway.existing_gw.id) == 0 ? 1 : 0
 
   vpc_id = module.vpc.vpc_id
 
@@ -42,11 +42,9 @@ resource "aws_internet_gateway" "stage-gw" {
   }
 }
 
-# Output the internet gateway ID if created
 output "internet_gateway_id" {
-  value = aws_internet_gateway.stage-gw[0].id
-  description = "ID of the internet gateway"
-  condition = length(data.aws_internet_gateway.existing_gw.ids) == 0
+  value = length(data.aws_internet_gateway.existing_gw.id) > 0 ? data.aws_internet_gateway.existing_gw.id : aws_internet_gateway.stage-gw[0].id
+  description = "The ID of the Internet Gateway"
 }
 
 resource "aws_route_table" "public_rt" {
@@ -54,7 +52,7 @@ resource "aws_route_table" "public_rt" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.stage-gw.id
+    gateway_id = length(data.aws_internet_gateway.existing_gw.id) > 0 ? data.aws_internet_gateway.existing_gw.id : aws_internet_gateway.stage-gw[0].id
   }
 
   tags = {
@@ -126,23 +124,6 @@ resource "aws_iam_role" "eks_cluster_role" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKSWorkerNodePolicy" {
-  role       = aws_iam_role.eks_worker_node_role.name  # Reference to the IAM role created for the worker nodes
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"  # Amazon EKS worker node policy
-}
-
-resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKS_CNI_Policy" {
-  role       = aws_iam_role.eks_worker_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-}
-
-# Attach the AmazonEC2ContainerRegistryReadOnly policy to the IAM Role
-resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEC2ContainerRegistryReadOnly" {
-  role       = aws_iam_role.eks_worker_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
-
-
 resource "aws_eks_cluster" "stage_eks" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster_role.arn
@@ -159,17 +140,12 @@ resource "aws_eks_node_group" "stage_eks_node_group" {
   subnet_ids      = module.vpc.private_subnets
 
   scaling_config {
-    desired_size = var.desired_capacity
-    max_size     = var.max_capacity
-    min_size     = var.min_capacity
-  }
-
-  update_config {
-    max_unavailable = 1
+    desired_size = var.node_desired_capacity
+    max_size     = var.node_max_capacity
+    min_size     = var.node_min_capacity
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.eks_worker_node_role_AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.eks_worker_node_role_AmazonEC2ContainerRegistryReadOnly,
+    aws_iam_role.eks_worker_node_role,
   ]
 }
