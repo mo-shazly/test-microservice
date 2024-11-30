@@ -28,7 +28,8 @@ jobs:
 
         run: |
              terraform init -reconfigure 
-             terraform destroy
+             terraform destroy -auto-approve
+
         working-directory: ./Terraform
 
     
