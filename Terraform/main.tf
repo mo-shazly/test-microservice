@@ -26,6 +26,8 @@ module "vpc" {
   public_subnets  = [var.public_subnet_cidr, "10.0.3.0/24"]
   azs             = ["us-west-2a", "us-west-2b"]
 }
+
+
 # Data block to check if an existing internet gateway is attached to the VPC
 data "aws_internet_gateway" "existing_gw" {
   filter {
@@ -47,7 +49,7 @@ resource "aws_internet_gateway" "stage-gw" {
 
 # Output the internet gateway ID if created or found
 output "internet_gateway_id" {
-  value       = data.aws_internet_gateway.existing_gw.id != "" ? data.aws_internet_gateway.existing_gw.id : aws_internet_gateway.stage-gw.id
+  value       = data.aws_internet_gateway.existing_gw.id != "" ? data.aws_internet_gateway.existing_gw.id : aws_internet_gateway.stage-gw[0].id
   description = "The ID of the Internet Gateway, if any exists."
 }
 
@@ -57,7 +59,7 @@ resource "aws_route_table" "public_rt" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.stage-gw.id
+    gateway_id = aws_internet_gateway.stage-gw[0].id  # Access the first instance if created
   }
 
   tags = {
