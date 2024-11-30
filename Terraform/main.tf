@@ -27,7 +27,6 @@ module "vpc" {
   azs             = ["us-west-2a", "us-west-2b"]
 }
 
-
 # Data block to check if an existing internet gateway is attached to the VPC
 data "aws_internet_gateway" "existing_gw" {
   filter {
@@ -69,7 +68,6 @@ resource "aws_route_table" "public_rt" {
 
 # Route Table Association for subnet A
 resource "aws_route_table_association" "subnet_association_a" {
-  count          = length(data.aws_route_table_association.existing_association_a.id) == 0 ? 1 : 0
   subnet_id      = module.vpc.public_subnets[0]
   route_table_id = aws_route_table.public_rt.id
 }
