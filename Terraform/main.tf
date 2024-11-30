@@ -1,12 +1,13 @@
 terraform {
   backend "s3" {
-    bucket         = "stagebucket12"      
-    key            = "stage-eks/terraform.tfstate"   
-    region         = "us-west-2"                        
-    encrypt        = true                              
-    dynamodb_table = "your-lock-table"          
+    bucket         = "stagebucket12"
+    key            = "stage-eks/terraform.tfstate"
+    region         = "us-west-2"
+    dynamodb_table = "terraform-lock"   # Reference the DynamoDB table you just created
+    encrypt        = true
   }
 }
+
 
 provider "aws" {
   region = var.region
