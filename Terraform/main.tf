@@ -14,7 +14,7 @@ provider "aws" {
 
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
-  name   = "stage-eks-vpc"
+  name   = "stage-eks-vpc1"
   cidr   = var.vpc_cidr
 
   enable_dns_support   = true
@@ -26,37 +26,24 @@ module "vpc" {
   azs             = ["us-west-2a", "us-west-2b"]
 }
 
-data "aws_internet_gateway" "existing_gw" {
-  filter {
-    name   = "attachment.vpc-id"
-    values = [module.vpc.vpc_id]
-  }
-}
 
 
-# Conditional creation of the internet gateway if one doesn't already exist
-resource "aws_internet_gateway" "stage-gw" {
-  count = length(data.aws_internet_gateway.existing_gw.id) == 0 ? 1 : 0
+resource "aws_internet_gateway" "stage-gw1" {
 
   vpc_id = module.vpc.vpc_id
 
-  lifecycle {
-    create_before_destroy = true
+  tags = {
+    Name = "custom_internet_gateway"
   }
 }
 
-output "internet_gateway_id" {
-  value = length(data.aws_internet_gateway.existing_gw.id) > 0 ? data.aws_internet_gateway.existing_gw.id : aws_internet_gateway.stage-gw[0].id
-  description = "The ID of the Internet Gateway"
-}
 
 resource "aws_route_table" "public_rt" {
   vpc_id = module.vpc.vpc_id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = length(data.aws_internet_gateway.existing_gw.id) > 0 ? data.aws_internet_gateway.existing_gw.id : aws_internet_gateway.stage-gw[0].id
-  }
+    gateway_id = aws_internet_gateway.stage-gw1.id  }
 
   tags = {
     Name = "public-route-table"
