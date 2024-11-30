@@ -35,13 +35,15 @@ jobs:
         with:
           terraform_version: 1.4.4
       - name: terraform init
-        run: terraform init
+        run: |
+             aws dynamodb delete-item --table-name terraform-lock --key '{"LockID": {"S": "6e56d67f-9a64-48b4-0a16-ef5740273c24"}}'
+             aws dynamodb get-item --table-name terraform-lock --key '{"LockID": {"S": "6e56d67f-9a64-48b4-0a16-ef5740273c24"}}'
+             rm -rf .terraform  
+             terraform init
         working-directory: ./Terraform
       
       - name: terraform plan
-        run: |
-             aws dynamodb delete-item --table-name terraform-lock --key '{"LockID": {"S": "6e56d67f-9a64-48b4-0a16-ef5740273c24"}}' 
-             terraform plan
+        run: terraform plan
         working-directory: ./Terraform
 
       - name: terraform apply or destroy
