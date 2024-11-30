@@ -1,12 +1,13 @@
 terraform {
   backend "s3" {
     bucket         = "stagebucket12"
-    key            = "stage-eks9/terraform.tfstate"
+    key            = "stage-eks8/terraform.tfstate"
     region         = "us-west-2"
     dynamodb_table = "terraform-lock"
     encrypt        = true
   }
 }
+
 
 provider "aws" {
   region = var.region
