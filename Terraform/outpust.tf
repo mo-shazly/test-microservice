@@ -16,7 +16,7 @@ output "cluster_id" {
 }
 
 output "node_group_id" {
-  value = aws_eks_node_group.stage_eks.id
+  value = aws_eks_node_group.stage_eks_node_group.id
 }
 
 
