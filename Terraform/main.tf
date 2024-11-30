@@ -112,6 +112,17 @@ resource "aws_iam_role" "eks_cluster_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKSWorkerNodePolicy" {
+  role       = aws_iam_role.eks_worker_node_role.name  # Reference to the IAM role created for the worker nodes
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"  # Amazon EKS worker node policy
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKS_CNI_Policy" {
+  role       = aws_iam_role.eks_worker_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
+
+
 resource "aws_eks_cluster" "stage_eks" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster_role.arn
