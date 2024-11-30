@@ -8,7 +8,6 @@ terraform {
   }
 }
 
-
 provider "aws" {
   region = var.region
 }
@@ -27,13 +26,6 @@ module "vpc" {
   azs             = ["us-west-2a", "us-west-2b"]
 }
 
-
-# Removed redundant Internet Gateway resource
-# aws_internet_gateway is managed by the VPC module now
-
-# Removed the explicit route table, route table association to avoid conflict with the VPC module
-# The VPC module will automatically create these resources
-
 resource "aws_security_group" "eks_sg" {
   name        = "stage-eks-sg"
   description = "Security group for EKS cluster"
@@ -45,7 +37,14 @@ resource "aws_security_group" "eks_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
+   
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Restrict this to your IP for security
+  }
+  
   ingress {
     from_port   = 443
     to_port     = 443
@@ -61,6 +60,10 @@ resource "aws_security_group" "eks_sg" {
   }
 }
 
+resource "aws_key_pair" "ssh_key" {
+  key_name   = "eks_ssh_key"
+  public_key = file(var.public_key_path) # Provide the path to your public key
+}
 
 resource "aws_iam_role" "eks_worker_node_role" {
   name = "stage-eks-worker-node-role"
@@ -116,7 +119,7 @@ resource "aws_eks_cluster" "stage_eks" {
   role_arn = aws_iam_role.eks_cluster_role.arn
 
   vpc_config {
-    subnet_ids = module.vpc.private_subnets
+    subnet_ids = module.vpc.public_subnets # Use public subnets for nodes
   }
 }
 
@@ -134,12 +137,17 @@ resource "aws_eks_node_group" "stage_eks_node_group" {
   cluster_name    = aws_eks_cluster.stage_eks.name
   node_group_name = "stage-eks-node-group"
   node_role_arn   = aws_iam_role.eks_worker_node_role.arn
-  subnet_ids      = module.vpc.private_subnets
+  subnet_ids      = module.vpc.public_subnets
 
   scaling_config {
     desired_size = var.node_desired_capacity
     max_size     = var.node_max_capacity
     min_size     = var.node_min_capacity
+  }
+
+  instance_types = ["t3.medium"] # Adjust as needed
+  remote_access {
+    ec2_ssh_key = aws_key_pair.ssh_key.key_name
   }
 
   depends_on = [
