@@ -122,6 +122,12 @@ resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKS_CNI_Po
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
+# Attach the AmazonEC2ContainerRegistryReadOnly policy to the IAM Role
+resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEC2ContainerRegistryReadOnly" {
+  role       = aws_iam_role.eks_worker_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
 
 resource "aws_eks_cluster" "stage_eks" {
   name     = var.cluster_name
