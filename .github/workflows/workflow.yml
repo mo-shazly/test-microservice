@@ -61,19 +61,8 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.4.4
-      - name: terraform init
-        run: terraform init
-        working-directory: ./Terraform
-      
-      - name: terraform plan
-        run: terraform plan
-        working-directory: ./Terraform
 
       - name: terraform apply or destroy
-        run: |
-          if [ "${{ github.event.inputs.destroy }}" = "yes" ]; then
-            terraform destroy -auto-approve
-          else
-            terraform apply -auto-approve
-          fi
+        run: terraform destroy -auto-approve
         working-directory: ./Terraform
+          
