@@ -37,7 +37,7 @@ data "aws_internet_gateway" "existing_gw" {
 # Define a local value to determine if an internet gateway exists
 locals {
   internet_gateway_exists = length(data.aws_internet_gateway.existing_gw.id) > 0
-  internet_gateway_id = local.internet_gateway_exists ? data.aws_internet_gateway.existing_gw.id : null
+  internet_gateway_id     = local.internet_gateway_exists ? data.aws_internet_gateway.existing_gw.id : null
 }
 
 # Conditional creation of the internet gateway if one doesn't already exist
