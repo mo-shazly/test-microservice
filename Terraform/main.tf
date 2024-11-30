@@ -51,12 +51,6 @@ resource "aws_internet_gateway" "stage-gw" {
   }
 }
 
-# Output the internet gateway ID if created or found
-output "internet_gateway_id" {
-  value       = local.internet_gateway_id != null ? local.internet_gateway_id : aws_internet_gateway.stage-gw[0].id
-  description = "The ID of the Internet Gateway, if any exists."
-}
-
 # Public Route Table
 resource "aws_route_table" "public_rt" {
   vpc_id = module.vpc.vpc_id

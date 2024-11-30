@@ -1,4 +1,3 @@
-# vpc-gateway.tf
 provider "aws" {
   region = var.region
 }
@@ -28,21 +27,42 @@ data "aws_internet_gateway" "existing_gw" {
 # Define a local value to determine if an internet gateway exists
 locals {
   internet_gateway_exists = length(data.aws_internet_gateway.existing_gw.id) > 0
+  internet_gateway_id     = local.internet_gateway_exists ? data.aws_internet_gateway.existing_gw.id : null
 }
 
-# Output to use in Step 2
-output "internet_gateway_exists" {
-  value = local.internet_gateway_exists
+# Conditional creation of the internet gateway if one doesn't already exist
+resource "aws_internet_gateway" "stage-gw" {
+  count = local.internet_gateway_id == null ? 1 : 0
+
+  vpc_id = module.vpc.vpc_id
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-output "existing_internet_gateway_id" {
-  value = data.aws_internet_gateway.existing_gw.id
+# Public Route Table
+resource "aws_route_table" "public_rt" {
+  vpc_id = module.vpc.vpc_id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = local.internet_gateway_id != null ? local.internet_gateway_id : aws_internet_gateway.stage-gw[0].id
+  }
+
+  tags = {
+    Name = "public-route-table"
+  }
 }
 
-output "vpc_id" {
-  value = module.vpc.vpc_id
+# Route Table Association for subnet A
+resource "aws_route_table_association" "subnet_association_a" {
+  subnet_id      = module.vpc.public_subnets[0]
+  route_table_id = aws_route_table.public_rt.id
 }
 
-output "public_subnet_ids" {
-  value = module.vpc.public_subnets
+# Route Table Association for subnet B
+resource "aws_route_table_association" "subnet_association_b" {
+  subnet_id      = module.vpc.public_subnets[1]
+  route_table_id = aws_route_table.public_rt.id
 }
