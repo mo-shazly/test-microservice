@@ -62,7 +62,7 @@ resource "aws_security_group" "eks_sg" {
 
 resource "aws_key_pair" "ssh_key" {
   key_name   = "eks_ssh_key"
-  public_key = file(var.public_key_path) # Provide the path to your public key
+  public_key = file(var.public_key_path) 
 }
 
 resource "aws_iam_role" "eks_worker_node_role" {

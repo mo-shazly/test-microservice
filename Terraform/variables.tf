@@ -42,3 +42,9 @@ variable "node_min_capacity" {
   description = "The minimum number of worker nodes"
   type        = number
 }
+
+variable "public_key_path" {
+  description = "Path to your public SSH key"
+  type        = string
+  default     = "id_rsa.pub" # Relative path to the key file
+}
