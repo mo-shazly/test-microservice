@@ -43,19 +43,20 @@ resource "aws_route_table" "public_rt" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.stage-gw1.id  }
+    gateway_id = aws_internet_gateway.stage_gw1.id
+  }
 
   tags = {
     Name = "public-route-table"
   }
 }
 
-resource "aws_route_table_association" "subnet_association_a" {
+resource "aws_route_table_association" "subnet_association_a1" {
   subnet_id      = module.vpc.public_subnets[0]
   route_table_id = aws_route_table.public_rt.id
 }
 
-resource "aws_route_table_association" "subnet_association_b" {
+resource "aws_route_table_association" "subnet_association_b1" {
   subnet_id      = module.vpc.public_subnets[1]
   route_table_id = aws_route_table.public_rt.id
 }
@@ -67,7 +68,7 @@ resource "aws_security_group" "eks_sg" {
 
   ingress {
     from_port   = 0
-    to_port     = 65535
+    to_port     = 5000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
