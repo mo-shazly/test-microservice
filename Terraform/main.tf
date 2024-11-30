@@ -24,10 +24,8 @@ module "vpc" {
   private_subnets = var.private_subnets
   public_subnets  = var.public_subnets
   azs             = ["us-west-2a", "us-west-2b"]
-
-  # Let the VPC module manage the Internet Gateway
-  enable_internet_gateway = true
 }
+
 
 # Removed redundant Internet Gateway resource
 # aws_internet_gateway is managed by the VPC module now
