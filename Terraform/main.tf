@@ -34,7 +34,7 @@ resource "aws_subnet" "stage_subnet" {
 
 
 resource "aws_internet_gateway" "stage_igw" {
-  vpc_id = module.vpc.vpc_id
+  vpc_id = aws_vpc.stage_vpc.id
 
   tags = {
     Name = "stage_igw"
@@ -42,7 +42,7 @@ resource "aws_internet_gateway" "stage_igw" {
 }
 
 resource "aws_route_table" "stage_route" {
-  vpc_id = module.vpc.vpc_id
+  vpc_id = aws_vpc.stage_vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -67,7 +67,7 @@ resource "aws_route_table_association" "public_subnet_association" {
 resource "aws_security_group" "eks_sg" {
   name        = "stage_sg"
   description = "Security group for EKS cluster"
-  vpc_id      = module.vpc.vpc_id
+  vpc_id = aws_vpc.stage_vpc.id
 
   ingress {
     from_port   = 0
