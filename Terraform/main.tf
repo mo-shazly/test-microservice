@@ -12,29 +12,60 @@ provider "aws" {
   region = var.region
 }
 
-module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
-  name   = "stage-eks-vpc1"
-  cidr   = var.vpc_cidr
+  resource "aws_vpc" "stage_vpc" {
+  cidr_block = var.vpc_cidr
 
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-  single_nat_gateway   = false
-
-
-  private_subnets = var.private_subnets
-  public_subnets  = var.public_subnets
-  azs             = ["us-west-2a", "us-west-2b"]
-
-  public_subnet_tags = {
-    "kubernetes.io/role/elb"           = "1"
-    "map_public_ip_on_launch"          = "true"  
-    "kubernetes.io/role/internal-elb"  = "0"
+  tags = {
+    Name = "stage_vpc"
   }
 }
 
+resource "aws_subnet" "stage_subnet" {
+  count = 2
+  vpc_id                  = aws_vpc.stage_vpc.id
+  cidr_block              = cidrsubnet(aws_vpc.stage_vpc.cidr_block, 8, count.index)
+  availability_zone       = element(["us-west-2a", "us-west-2b"], count.index)
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "stage_subnet-${count.index}"
+  }
+}
+
+
+resource "aws_internet_gateway" "stage_igw" {
+  vpc_id = module.vpc.vpc_id
+
+  tags = {
+    Name = "stage_igw"
+  }
+}
+
+resource "aws_route_table" "stage_route" {
+  vpc_id = module.vpc.vpc_id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.stage_igw.id
+  }
+
+  tags = {
+    Name = "stage_route"
+  }
+}
+
+
+
+resource "aws_route_table_association" "public_subnet_association" {
+  count          = 2
+  subnet_id      = aws_subnet.stage_subnet[count.index].id
+  route_table_id = aws_route_table.stage_route.id
+}
+
+
+
 resource "aws_security_group" "eks_sg" {
-  name        = "stage-eks-sg"
+  name        = "stage_sg"
   description = "Security group for EKS cluster"
   vpc_id      = module.vpc.vpc_id
 
@@ -49,7 +80,7 @@ resource "aws_security_group" "eks_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Restrict this to your IP for security
+    cidr_blocks = ["0.0.0.0/0"]  
   }
 
   ingress {
@@ -131,13 +162,15 @@ resource "aws_eks_cluster" "stage_eks" {
   role_arn = aws_iam_role.eks_cluster_role.arn
 
   vpc_config {
-    subnet_ids = module.vpc.public_subnets
+    subnet_ids = aws_subnet.stage_subnet[*].id
+    security_group_ids = [aws_security_group.eks_sg.id]
   }
 }
 
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   role       = aws_iam_role.eks_cluster_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+
 }
 
 resource "aws_iam_role_policy_attachment" "eks_service_policy" {
@@ -149,7 +182,7 @@ resource "aws_eks_node_group" "stage_eks_node_group" {
   cluster_name    = aws_eks_cluster.stage_eks.name
   node_group_name = "stage-eks-node-group"
   node_role_arn   = aws_iam_role.eks_worker_node_role.arn
-  subnet_ids      = module.vpc.public_subnets
+  subnet_ids      = aws_subnet.stage_subnet[*].id
 
   scaling_config {
     desired_size = var.node_desired_capacity
@@ -157,33 +190,26 @@ resource "aws_eks_node_group" "stage_eks_node_group" {
     min_size     = var.node_min_capacity
   }
 
-  instance_types = ["t3.medium"] # Adjust instance type as needed
+  instance_types = ["t2.large"] 
 
   remote_access {
     ec2_ssh_key = aws_key_pair.ssh_key.key_name
+    source_security_group_ids = [aws_security_group.eks_sg.id]
   }
 
-  depends_on = [
-    aws_iam_role.eks_worker_node_role,
-  ]
-}
-# Internet Gateway and Route Table Configuration
-
-resource "aws_internet_gateway" "mastergw" {
-  vpc_id = module.vpc.vpc_id
 }
 
-resource "aws_route_table" "master_route" {
-  vpc_id = module.vpc.vpc_id
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.mastergw.id
-  }
+data "aws_eks_cluster" "stage_eks" {
+  name = aws_eks_cluster.stage_eks.name
 }
 
-resource "aws_route_table_association" "public_subnet_association" {
-  count          = length(module.vpc.public_subnets)
-  subnet_id      = module.vpc.public_subnets[count.index]
-  route_table_id = aws_route_table.master_route.id
+data "aws_eks_cluster_auth" "stage_eks" {
+  name = aws_eks_cluster.stage_eks.name
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.stage_eks.endpoint
+  token                  = data.aws_eks_cluster_auth.stage_eks.token
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.stage_eks.certificate_authority[0].data)
 }
