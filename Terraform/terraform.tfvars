@@ -1,16 +1,10 @@
-#region               = "us-west-2"
-#ssh_key_name         = "my-ssh-key"
-#vpc_cidr             = "10.0.0.0/16"
-#private_subnet_cidr  = "10.0.1.0/24"
-#public_subnet_cidr   = "10.0.0.0/24"
-#cluster_name         = "stage-eks-cluster"
-#node_group_name      = "stage-eks-node-group"
-#node_instance_type   = "t3.medium"
-#desired_capacity     = 2
-#max_capacity         = 3
-#min_capacity         = 1
-
-region               = "us-west-2"
-ssh_key_name         = "my-ssh-key"
-vpc_cidr             = "10.0.0.0/16"
-private_subnet_cidr  = "10.0.[_{{{CITATION{{{_1{](https://github.com/praveenjirra/deploy-docker-swarm-using-terraform-ansible/tree/e051f433f9c3d73c12698a6742dce8ae19bbb07a/README.md)
+region              = "us-east-1"
+vpc_cidr            = "10.0.0.0/16"
+private_subnets     = ["10.0.1.0/24", "10.0.2.0/24"]
+public_subnets      = ["10.0.3.0/24", "10.0.4.0/24"]
+cluster_name        = "my-eks-cluster"
+node_instance_type  = "t3.medium"
+node_desired_capacity = 2
+node_max_capacity   = 4
+node_min_capacity   = 1
+environment         = "production"

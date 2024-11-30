@@ -3,10 +3,11 @@ terraform {
     bucket         = "stagebucket12"
     key            = "stage-eks/terraform.tfstate"
     region         = "us-west-2"
-    dynamodb_table = "terraform-lock"
+    dynamodb_table = "terraform-lock"   # Reference the DynamoDB table you just created
     encrypt        = true
   }
 }
+
 
 provider "aws" {
   region = var.region
@@ -25,24 +26,14 @@ module "vpc" {
   public_subnets  = [var.public_subnet_cidr, "10.0.3.0/24"]
   azs             = ["us-west-2a", "us-west-2b"]
 }
-
 # Data block to check if an existing internet gateway is attached to the VPC
 data "aws_internet_gateway" "existing_gw" {
-  filter {
-    name   = "attachment.vpc-id"
-    values = [module.vpc.vpc_id]
-  }
-}
-
-# Define a local value to determine if an internet gateway exists
-locals {
-  internet_gateway_exists = length(data.aws_internet_gateway.existing_gw.id) > 0
-  internet_gateway_id     = local.internet_gateway_exists ? data.aws_internet_gateway.existing_gw.id : null
+  vpc_id = module.vpc.vpc_id
 }
 
 # Conditional creation of the internet gateway if one doesn't already exist
 resource "aws_internet_gateway" "stage-gw" {
-  count = local.internet_gateway_id == null ? 1 : 0
+  count = length(data.aws_internet_gateway.existing_gw.ids) == 0 ? 1 : 0
 
   vpc_id = module.vpc.vpc_id
 
@@ -51,13 +42,19 @@ resource "aws_internet_gateway" "stage-gw" {
   }
 }
 
-# Public Route Table
+# Output the internet gateway ID if created
+output "internet_gateway_id" {
+  value = aws_internet_gateway.stage-gw[0].id
+  description = "ID of the internet gateway"
+  condition = length(data.aws_internet_gateway.existing_gw.ids) == 0
+}
+
 resource "aws_route_table" "public_rt" {
   vpc_id = module.vpc.vpc_id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = local.internet_gateway_id != null ? local.internet_gateway_id : aws_internet_gateway.stage-gw[0].id
+    gateway_id = aws_internet_gateway.stage-gw.id
   }
 
   tags = {
@@ -65,13 +62,11 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
-# Route Table Association for subnet A
 resource "aws_route_table_association" "subnet_association_a" {
   subnet_id      = module.vpc.public_subnets[0]
   route_table_id = aws_route_table.public_rt.id
 }
 
-# Route Table Association for subnet B
 resource "aws_route_table_association" "subnet_association_b" {
   subnet_id      = module.vpc.public_subnets[1]
   route_table_id = aws_route_table.public_rt.id
@@ -132,8 +127,8 @@ resource "aws_iam_role" "eks_cluster_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKSWorkerNodePolicy" {
-  role       = aws_iam_role.eks_worker_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  role       = aws_iam_role.eks_worker_node_role.name  # Reference to the IAM role created for the worker nodes
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"  # Amazon EKS worker node policy
 }
 
 resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKS_CNI_Policy" {
@@ -141,10 +136,12 @@ resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEKS_CNI_Po
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
+# Attach the AmazonEC2ContainerRegistryReadOnly policy to the IAM Role
 resource "aws_iam_role_policy_attachment" "eks_worker_node_role_AmazonEC2ContainerRegistryReadOnly" {
   role       = aws_iam_role.eks_worker_node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
+
 
 resource "aws_eks_cluster" "stage_eks" {
   name     = var.cluster_name
@@ -157,7 +154,7 @@ resource "aws_eks_cluster" "stage_eks" {
 
 resource "aws_eks_node_group" "stage_eks_node_group" {
   cluster_name    = aws_eks_cluster.stage_eks.name
-  node_group_name = var.node_group_name
+  node_group_name = "stage-eks-node-group"
   node_role_arn   = aws_iam_role.eks_worker_node_role.arn
   subnet_ids      = module.vpc.private_subnets
 

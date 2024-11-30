@@ -1,13 +1,13 @@
 output "eks_cluster_name" {
-  value = aws_eks_cluster.stage_eks.name
+  value = aws_eks_cluster.example.name
 }
 
 output "eks_cluster_endpoint" {
-  value = aws_eks_cluster.stage_eks.endpoint
+  value = aws_eks_cluster.example.endpoint
 }
 
 output "eks_cluster_certificate_authority_data" {
-  value = aws_eks_cluster.stage_eks.certificate_authority[0].data
+  value = aws_eks_cluster.example.certificate_authority[0].data
 }
 
 output "vpc_id" {
@@ -23,10 +23,5 @@ output "public_subnet_ids" {
 }
 
 output "eks_nodegroup_arn" {
-  value = aws_eks_node_group.stage_eks_node_group.arn
-}
-
-output "internet_gateway_id" {
-  value       = local.internet_gateway_id != null ? local.internet_gateway_id : aws_internet_gateway.stage-gw[0].id
-  description = "The ID of the Internet Gateway, if any exists."
+  value = aws_eks_node_group.example.arn
 }
