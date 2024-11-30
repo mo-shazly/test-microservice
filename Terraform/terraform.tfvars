@@ -1,4 +1,3 @@
-# terraform.tfvars
 region               = "us-west-2"
 ssh_key_name         = "my-ssh-key"
 vpc_cidr             = "10.0.0.0/16"
