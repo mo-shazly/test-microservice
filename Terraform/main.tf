@@ -26,10 +26,13 @@ module "vpc" {
   azs             = ["us-west-2a", "us-west-2b"]
 
   public_subnet_tags = {
-    "kubernetes.io/role/elb"              = "1"
-    "map_public_ip_on_launch"             = "true"  # Ensures instances in public subnets get public IPs
-    "kubernetes.io/role/internal-elb"    = "0"
+    "kubernetes.io/role/elb"           = "1"
+    "map_public_ip_on_launch"          = "true"  # Ensures instances in public subnets get public IPs
+    "kubernetes.io/role/internal-elb"  = "0"
   }
+
+  # Add this to ensure public IPs are automatically assigned
+  enable_public_ip_on_launch = true  # Ensures auto-assign public IPs to instances in public subnets
 }
 
 resource "aws_security_group" "eks_sg" {
