@@ -26,8 +26,15 @@ module "vpc" {
   public_subnets  = [var.public_subnet_cidr, "10.0.3.0/24"]
   azs             = ["us-west-2a", "us-west-2b"]
 }
+# Data block to check if an existing internet gateway is attached to the VPC
+data "aws_internet_gateway" "existing_gw" {
+  vpc_id = module.vpc.vpc_id
+}
 
+# Conditional creation of the internet gateway if one doesn't already exist
 resource "aws_internet_gateway" "stage-gw" {
+  count = length(data.aws_internet_gateway.existing_gw.ids) == 0 ? 1 : 0
+
   vpc_id = module.vpc.vpc_id
 
   lifecycle {
@@ -35,6 +42,13 @@ resource "aws_internet_gateway" "stage-gw" {
   }
 }
 
+# Output the internet gateway ID if created
+output "internet_gateway_id" {
+  value = aws_internet_gateway.stage-gw[0].id
+  description = "ID of the internet gateway"
+  condition = length(data.aws_internet_gateway.existing_gw.ids) == 0
+}
+# Public Route Table
 resource "aws_route_table" "public_rt" {
   vpc_id = module.vpc.vpc_id
 
@@ -48,14 +62,28 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
-resource "aws_route_table_association" "subnet_association_a" {
-  subnet_id      = module.vpc.public_subnets[0]
-  route_table_id = aws_route_table.public_rt.id
+# Data source to get the existing route table association for subnet A
+data "aws_route_table_association" "existing_association_a" {
+  subnet_id = "subnet-0e1fdfd71"  # The subnet ID you want to check for association
 }
 
+# Data source to get the existing route table association for subnet B
+data "aws_route_table_association" "existing_association_b" {
+  subnet_id = module.vpc.public_subnets[1]  # Reference to another subnet
+}
+
+# Route Table Association for subnet A (Only create if not already associated)
+resource "aws_route_table_association" "subnet_association_a" {
+  count           = length(data.aws_route_table_association.existing_association_a.id) == 0 ? 1 : 0  # Only create if no association exists
+  subnet_id       = "subnet-0e1fdfd71"  # The subnet ID you want to associate
+  route_table_id  = aws_route_table.public_rt.id
+}
+
+# Route Table Association for subnet B (Only create if not already associated)
 resource "aws_route_table_association" "subnet_association_b" {
-  subnet_id      = module.vpc.public_subnets[1]
-  route_table_id = aws_route_table.public_rt.id
+  count           = length(data.aws_route_table_association.existing_association_b.id) == 0 ? 1 : 0  # Only create if no association exists
+  subnet_id       = module.vpc.public_subnets[1]  # The second subnet reference
+  route_table_id  = aws_route_table.public_rt.id
 }
 
 resource "aws_security_group" "eks_sg" {
