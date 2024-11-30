@@ -80,6 +80,7 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ./Terraform
 
+        
   deploy:
     name: Deploy to EKS
     runs-on: ubuntu-latest
