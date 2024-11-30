@@ -32,11 +32,11 @@ jobs:
             region: us-west-2
             cluster: stage-eks-cluster
 
-      - name: Deploy Kubernetes Manifests
-        run: |
-          kubectl apply -f deployment1.yml  
-          kubectl apply -f service1.yml
-        working-directory: ./kubernetes
+      #- name: Deploy Kubernetes Manifests
+        #run: |
+         # kubectl apply -f deployment1.yml  
+          #kubectl apply -f service1.yml
+        #working-directory: ./kubernetes
 
       - name: Verify Deployment
         run: |
