@@ -26,23 +26,6 @@ module "vpc" {
   azs             = ["us-west-2a", "us-west-2b"]
 }
 
-# Data block to check if an existing internet gateway is attached to the VPC
-data "aws_internet_gateway" "existing_gw" {
-  filter {
-    name   = "attachment.vpc-id"
-    values = [module.vpc.vpc_id]
-  }
-}
-
-# Define a local value to determine if an internet gateway exists
-locals {
-  internet_gateway_id = length(data.aws_internet_gateway.existing_gw.ids) > 0 ? data.aws_internet_gateway.existing_gw.ids[0] : null
-}
-
-# Output the result of internet gateway existence
-output "internet_gateway_exists" {
-  value = local.internet_gateway_id != null
-}
 
 # Conditional creation of the internet gateway if one doesn't already exist
 resource "aws_internet_gateway" "stage-gw" {
