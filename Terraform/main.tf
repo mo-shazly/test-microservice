@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket         = "stagebucket12"
-    key            = "stage-eks1/terraform.tfstate"
+    key            = "stage-eks8/terraform.tfstate"
     region         = "us-west-2"
     dynamodb_table = "terraform-lock"
     encrypt        = true
@@ -98,6 +98,21 @@ resource "aws_iam_role" "eks_worker_node_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "worker_node_policy" {
+  role       = aws_iam_role.eks_worker_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "worker_cni_policy" {
+  role       = aws_iam_role.eks_worker_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_read_only_policy" {
+  role       = aws_iam_role.eks_worker_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
 resource "aws_iam_role" "eks_cluster_role" {
   name = "stage-eks-cluster-role"
 
@@ -122,6 +137,15 @@ resource "aws_eks_cluster" "stage_eks" {
   vpc_config {
     subnet_ids = module.vpc.private_subnets
   }
+}
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  role       = aws_iam_role.eks_cluster_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "eks_service_policy" {
+  role       = aws_iam_role.eks_cluster_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
 }
 
 resource "aws_eks_node_group" "stage_eks_node_group" {
