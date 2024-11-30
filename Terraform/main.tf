@@ -20,8 +20,6 @@ module "vpc" {
   enable_dns_support   = true
   enable_dns_hostnames = true
   single_nat_gateway   = false
-  enable_internet_gateway = false 
-  enable_route_table    = false   
 
 
   private_subnets = var.private_subnets
