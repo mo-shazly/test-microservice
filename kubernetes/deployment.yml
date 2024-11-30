@@ -13,7 +13,11 @@ spec:
         app: microservice
     spec:
       containers:
-      - name: microservice
-        image: 20150748/micro-app:db451f1e251d730ff3f8eff4a06365bafe00ad8f
+     # - name: microservice
+      #  image: 20150748/micro-app:db451f1e251d730ff3f8eff4a06365bafe00ad8f
+       # ports:
+        #- containerPort: 5000
+      - name: test app
+        image: shaimaamelsaadi/microsevicesapp:latest
         ports:
         - containerPort: 5000
