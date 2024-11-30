@@ -12,7 +12,6 @@ terraform {
 provider "aws" {
   region = var.region
 }
-
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
   name   = "stage-eks-vpc"
@@ -26,7 +25,6 @@ module "vpc" {
   public_subnets  = [var.public_subnet_cidr, "10.0.3.0/24"]
   azs             = ["us-west-2a", "us-west-2b"]
 }
-
 
 # Data block to check if an existing internet gateway is attached to the VPC
 data "aws_internet_gateway" "existing_gw" {
@@ -48,7 +46,7 @@ output "internet_gateway_exists" {
 
 # Conditional creation of the internet gateway if one doesn't already exist
 resource "aws_internet_gateway" "stage-gw" {
-  for_each = local.internet_gateway_id == null ? { "gw" = "stage-gw" } : {}
+  count = local.internet_gateway_id == null ? 1 : 0
 
   vpc_id = module.vpc.vpc_id
 
@@ -59,7 +57,7 @@ resource "aws_internet_gateway" "stage-gw" {
 
 # Output the internet gateway ID if created or found
 output "internet_gateway_id" {
-  value       = local.internet_gateway_id != null ? local.internet_gateway_id : aws_internet_gateway.stage-gw["gw"].id
+  value       = local.internet_gateway_id != null ? local.internet_gateway_id : aws_internet_gateway.stage-gw[0].id
   description = "The ID of the Internet Gateway, if any exists."
 }
 
@@ -69,7 +67,7 @@ resource "aws_route_table" "public_rt" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = local.internet_gateway_id != null ? local.internet_gateway_id : aws_internet_gateway.stage-gw["gw"].id
+    gateway_id = local.internet_gateway_id != null ? local.internet_gateway_id : aws_internet_gateway.stage-gw[0].id
   }
 
   tags = {
@@ -88,7 +86,6 @@ resource "aws_route_table_association" "subnet_association_b" {
   subnet_id      = module.vpc.public_subnets[1]
   route_table_id = aws_route_table.public_rt.id
 }
-
 
 
 resource "aws_security_group" "eks_sg" {
