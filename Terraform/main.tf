@@ -26,8 +26,9 @@ module "vpc" {
   azs             = ["us-west-2a", "us-west-2b"]
 
   public_subnet_tags = {
-    "kubernetes.io/role/elb" = "1"
-    "map_public_ip_on_launch" = "true"
+    "kubernetes.io/role/elb"              = "1"
+    "map_public_ip_on_launch"             = "true"  # Ensures instances in public subnets get public IPs
+    "kubernetes.io/role/internal-elb"    = "0"
   }
 }
 
