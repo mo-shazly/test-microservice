@@ -20,6 +20,9 @@ module "vpc" {
   enable_dns_support   = true
   enable_dns_hostnames = true
   single_nat_gateway   = false
+  enable_internet_gateway = false 
+  enable_route_table    = false   
+
 
   private_subnets = var.private_subnets
   public_subnets  = var.public_subnets
@@ -98,7 +101,6 @@ resource "aws_iam_role_policy_attachment" "worker_cni_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
-
 resource "aws_iam_role_policy_attachment" "ec2_read_only_policy" {
   role       = aws_iam_role.eks_worker_node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
@@ -166,4 +168,24 @@ resource "aws_eks_node_group" "stage_eks_node_group" {
   depends_on = [
     aws_iam_role.eks_worker_node_role,
   ]
+}
+# Internet Gateway and Route Table Configuration
+
+resource "aws_internet_gateway" "mastergw" {
+  vpc_id = module.vpc.vpc_id
+}
+
+resource "aws_route_table" "master_route" {
+  vpc_id = module.vpc.vpc_id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.mastergw.id
+  }
+}
+
+resource "aws_route_table_association" "public_subnet_association" {
+  count          = length(module.vpc.public_subnets)
+  subnet_id      = module.vpc.public_subnets[count.index]
+  route_table_id = aws_route_table.master_route.id
 }
