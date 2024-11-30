@@ -40,7 +40,7 @@ jobs:
       
       - name: terraform plan
         run: |
-             aws dynamodb delete-item --table-name terraform-lock --key '{"LockID": {"S": "b90eeed1-b695-aaa3-b47a-f9af706f20bf"}}' 
+             aws dynamodb delete-item --table-name terraform-lock --key '{"LockID": {"S": "6e56d67f-9a64-48b4-0a16-ef5740273c24"}}' 
              terraform plan
         working-directory: ./Terraform
 
