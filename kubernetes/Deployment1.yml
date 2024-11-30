@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: microservice
+  name: microservice1
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: microservice
+      app: microservice1
   template:
     metadata:
       labels:
-        app: microservice
+        app: microservice1
     spec:
       containers:
-      - name: microservice
-        image: 20150748/micro-app:db451f1e251d730ff3f8eff4a06365bafe00ad8f
+      - name: microservice1
+        image: shaimaamelsaadi/microsevicesapp:latest
         ports:
         - containerPort: 5000
