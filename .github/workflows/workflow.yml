@@ -79,12 +79,7 @@ jobs:
         working-directory: ./Terraform
 
       - name: terraform apply or destroy
-        run: |
-          if [ "${{ github.event.inputs.destroy }}" = "yes" ]; then
-            terraform destroy -auto-approve
-          else
-            terraform apply -auto-approve
-          fi
+        run: terraform apply -auto-approve
         working-directory: ./Terraform
 
   deploy:
