@@ -11,7 +11,7 @@ jobs:
   destroy_resources:
     name: Destroy Resources
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.destroy == 'yes' }}
+    
     steps:
       - name: checkout config files
         uses: actions/checkout@v2
