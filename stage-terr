@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket         = "stagebucket12"
-    key            = "stage-eks8/terraform.tfstate"
+    key            = "stage-eks9/terraform.tfstate"
     region         = "us-west-2"
     dynamodb_table = "terraform-lock"
     encrypt        = true
@@ -24,16 +24,42 @@ module "vpc" {
   private_subnets = var.private_subnets
   public_subnets  = var.public_subnets
   azs             = ["us-west-2a", "us-west-2b"]
-
-  # Let the VPC module manage the Internet Gateway
-  enable_internet_gateway = true
 }
 
-# Removed redundant Internet Gateway resource
-# aws_internet_gateway is managed by the VPC module now
 
-# Removed the explicit route table, route table association to avoid conflict with the VPC module
-# The VPC module will automatically create these resources
+
+resource "aws_internet_gateway" "stage-gw1" {
+
+  vpc_id = module.vpc.vpc_id
+
+  tags = {
+    Name = "custom_internet_gateway"
+  }
+}
+
+
+resource "aws_route_table" "public_rt" {
+  vpc_id = module.vpc.vpc_id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.stage-gw1.id
+  }
+
+  tags = {
+    Name = "public-route-table"
+  }
+}
+
+resource "aws_route_table_association" "subnet_association_a1" {
+  subnet_id      = module.vpc.public_subnets[0]
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "subnet_association_b1" {
+  subnet_id      = module.vpc.public_subnets[1]
+  route_table_id = aws_route_table.public_rt.id
+}
 
 resource "aws_security_group" "eks_sg" {
   name        = "stage-eks-sg"
@@ -112,7 +138,6 @@ resource "aws_eks_cluster" "stage_eks" {
     subnet_ids = module.vpc.private_subnets
   }
 }
-
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   role       = aws_iam_role.eks_cluster_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"

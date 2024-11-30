@@ -25,7 +25,10 @@ jobs:
         with:
           terraform_version: 1.4.4
       - name: terraform init
-        run: terraform destroy
+
+        run: |
+             terraform init -reconfigure 
+             terraform destroy
         working-directory: ./Terraform
 
     
