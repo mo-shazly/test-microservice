@@ -1,4 +1,4 @@
-name: Microservice pipeline App
+name: Apply k8s Deployments
 on:
   push:
     branches:
