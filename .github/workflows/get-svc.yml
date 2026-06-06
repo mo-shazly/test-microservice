@@ -1,0 +1,41 @@
+name: Microservice pipeline App 1
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: "Destroy Resources"
+        required: true
+        default: "no"
+jobs:
+ deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Kubernetes Manifests
+        uses: actions/checkout@v6.0.3
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v6.2.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Update kubeconfig
+        run: |
+              aws eks --region us-west-2 update-kubeconfig --name stage-eks-cluster 
+
+
+      - name: Verify Deployment
+        run: |
+          kubectl get pods  
+          kubectl get svc
+          kubectl describe svc microservice-service
