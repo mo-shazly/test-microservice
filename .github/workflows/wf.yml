@@ -44,6 +44,7 @@ jobs:
           echo $IP
 
   terraform:
+    
     name: terraform deployment
     runs-on: ubuntu-latest
     needs: containerization
