@@ -33,6 +33,12 @@ jobs:
         run: |
               aws eks --region us-west-2 update-kubeconfig --name stage-eks-cluster 
 
+      - name: Deploy Kubernetes Manifests
+        run: |
+          kubectl apply -f deployment.yml  
+          kubectl apply -f service.yml
+        working-directory: ./kubernetes
+
       - name: Trigger app deployment
         uses: statsig-io/kubectl-via-eksctl@v1.18.2 #statsig-io/kubectl-via-eksctl@v1.18.2 #statsig-io/kubectl-via-eksctl@main
         env:
@@ -41,13 +47,8 @@ jobs:
             region: us-west-2
             cluster: stage-eks-cluster
         with:
-            args: rollout restart deployment/willanyoneeverreadthis
+            args: rollout restart deployment/microservice
 
-      - name: Deploy Kubernetes Manifests
-        run: |
-          kubectl apply -f deployment.yml  
-          kubectl apply -f service.yml
-        working-directory: ./kubernetes
 
       - name: Verify Deployment
         run: |
