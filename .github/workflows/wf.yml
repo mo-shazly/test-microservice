@@ -1,4 +1,4 @@
-name: Microservice pipeline App 1
+name: Microservice pipeline App 2
 
 on:
   push:
